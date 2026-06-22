@@ -73,15 +73,21 @@ typedef enum
 #define VL0x_INT_Pin GPIO_PIN_5
 #define VL0x_INT_GPIO_Port GPIOA
 #define VL0x_INT_EXTI_IRQn EXTI4_15_IRQn
+#define TB6600_PUL_Pin GPIO_PIN_1
+#define TB6600_PUL_GPIO_Port GPIOB
 #define STATUS_LED_Pin GPIO_PIN_6
 #define STATUS_LED_GPIO_Port GPIOC
 #define T_JTMS_Pin GPIO_PIN_13
 #define T_JTMS_GPIO_Port GPIOA
 #define T_JTCK_Pin GPIO_PIN_14
 #define T_JTCK_GPIO_Port GPIOA
+#define TB6600_EN_Pin GPIO_PIN_6
+#define TB6600_EN_GPIO_Port GPIOB
+#define TB6600_DIR_Pin GPIO_PIN_7
+#define TB6600_DIR_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
-
+#define SW_VERSION "v1.0.0"
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
