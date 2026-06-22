@@ -81,7 +81,7 @@ typedef enum
 #define T_JTCK_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
-
+#define SW_VERSION "v1.0.0"
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

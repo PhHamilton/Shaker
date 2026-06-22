@@ -41,6 +41,18 @@ extern UART_HandleTypeDef huart1;
 void MX_USART1_UART_Init(void);
 
 /* USER CODE BEGIN Prototypes */
+#define UART_BUFFER_SIZE 128
+
+typedef struct
+{
+    uint8_t rx_buf[UART_BUFFER_SIZE];
+    uint8_t buffer_head;
+    uint8_t buffer_tail;
+    uint8_t msg;
+    uint32_t last_byte_tick;
+}uart_msg_t;
+
+void serial_dma_start(void);
 
 /* USER CODE END Prototypes */
 

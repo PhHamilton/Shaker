@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "dma.h"
 #include "i2c.h"
 #include "usart.h"
 #include "gpio.h"
@@ -26,12 +27,19 @@
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include "tof_handler.h"
+#include "serial_handler.h"
 
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+typedef struct
+{
+    uint8_t j_max;
+    uint8_t a_max;
+    uint8_t v_max;
+    int8_t d;
+}test_suite_t;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -49,7 +57,9 @@
 /* USER CODE BEGIN PV */
 static system_state_t system_state = SYSTEM_IDLE;
 volatile bool tof_measurement_ready = false;
+serial_packet_t serial_pkt;
 tof_handler_t th;
+test_suite_t test_suite;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -91,9 +101,13 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_I2C2_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+
+  serial_initialize(&serial_pkt);
+  serial_dma_start();
 
   if(tof_handler_init(&th) != TOF_OK)
   {
@@ -110,6 +124,76 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+    if(serial_message_available())
+    {
+        if(serial_parse(&serial_pkt) == SERIAL_OK)
+        {
+            switch(serial_pkt.cmd)
+            {
+                case SERIAL_IDENTIFY:
+                {
+                    uint8_t tx_buf[9];
+                    tx_buf[0] = serial_pkt.cmd;
+                    tx_buf[1] = (SHAKER_ID >> 8) & 0xFF;
+                    tx_buf[2] = SHAKER_ID & 0xFF;
+
+                    for(uint8_t i = 0; i < sizeof(SW_VERSION)/sizeof(SW_VERSION[0]); i++)
+                    {
+                        tx_buf[i+3] = SW_VERSION[i];
+                    }
+
+                    if(serial_send(tx_buf, sizeof(tx_buf)) != SERIAL_OK)
+                    {
+                        // Do something..?
+                    }
+                }
+                break;
+                case SERIAL_CONFIGURE_PARAM:
+                {
+                    system_state = SYSTEM_CALIBRATION;
+                }
+                break;
+                case SERIAL_CONFIGURE_TEST_SUITE:
+                {
+                    if(serial_pkt.payload_size != 4)
+                    {
+                        break;
+                    }
+
+                    test_suite.j_max = serial_pkt.payload[0];
+                    test_suite.a_max = serial_pkt.payload[1];
+                    test_suite.v_max = serial_pkt.payload[2];
+                    test_suite.d = (int8_t)serial_pkt.payload[3];
+                }
+                break;
+                case SERIAL_START_TEST:
+                {
+                    system_state = SYSTEM_RUN;
+                }
+                break;
+                case SERIAL_STOP_TEST:
+                {
+                    system_state = SYSTEM_IDLE;
+                }
+                case SERIAL_UNKNOWN:
+                {
+
+                }
+                break;
+                default:
+                {
+
+                }
+                break;
+            }
+        }
+        else
+        {
+
+        }
+    }
+
     switch(system_state)
     {
         case SYSTEM_IDLE:
