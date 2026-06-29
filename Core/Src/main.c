@@ -20,6 +20,7 @@
 #include "main.h"
 #include "dma.h"
 #include "i2c.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -28,6 +29,7 @@
 #include <stdio.h>
 #include "tof_handler.h"
 #include "serial_handler.h"
+#include "tb6600.h"
 
 /* USER CODE END Includes */
 
@@ -104,6 +106,7 @@ int main(void)
   MX_DMA_Init();
   MX_I2C2_Init();
   MX_USART1_UART_Init();
+  MX_TIM14_Init();
   /* USER CODE BEGIN 2 */
 
   serial_initialize(&serial_pkt);
@@ -114,6 +117,12 @@ int main(void)
       Error_Handler();
   }
   tof_handler_start_measurement(TOF_MEASUREMENT_ASAP);
+
+  TB6600_init();
+  if(TB6600_start(TB6600_FORWARD, 200) != TB6600_OK)
+  {
+    Error_Handler();
+  }
 
   /* USER CODE END 2 */
 
