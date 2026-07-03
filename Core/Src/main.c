@@ -30,18 +30,12 @@
 #include "tof_handler.h"
 #include "serial_handler.h"
 #include "tb6600.h"
+#include "trajectory_planner.h"
 
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-typedef struct
-{
-    uint8_t j_max;
-    uint8_t a_max;
-    uint8_t v_max;
-    int8_t d;
-}test_suite_t;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -107,8 +101,10 @@ int main(void)
   MX_I2C2_Init();
   MX_USART1_UART_Init();
   MX_TIM14_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
+  //HAL_TIM_Base_Start_IT(&htim2);
   serial_initialize(&serial_pkt);
   serial_dma_start();
 
@@ -308,6 +304,13 @@ void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin)
       asm("nop");
   }
  }
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  if (htim == &htim2)
+  {
+      asm("nop");
+  }
+}
 /* USER CODE END 4 */
 
 /**
