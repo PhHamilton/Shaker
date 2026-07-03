@@ -30,18 +30,12 @@
 #include "tof_handler.h"
 #include "serial_handler.h"
 #include "tb6600.h"
+#include "trajectory_planner.h"
 
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-typedef struct
-{
-    uint8_t j_max;
-    uint8_t a_max;
-    uint8_t v_max;
-    int8_t d;
-}test_suite_t;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -62,6 +56,7 @@ volatile bool tof_measurement_ready = false;
 serial_packet_t serial_pkt;
 tof_handler_t th;
 test_suite_t test_suite;
+motion_state_t motion_state;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -107,6 +102,7 @@ int main(void)
   MX_I2C2_Init();
   MX_USART1_UART_Init();
   MX_TIM14_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
   serial_initialize(&serial_pkt);
@@ -119,6 +115,19 @@ int main(void)
   tof_handler_start_measurement(TOF_MEASUREMENT_ASAP);
 
   TB6600_init();
+  motion_init(&motion_state, 0.001f);
+
+  test_suite.j_max = 500;
+  test_suite.a_max = 20;
+  test_suite.v_max = 10;
+
+  motion_state.target_d = 1;
+  motion_state.steps_per_mm = 400;
+  motion_state.is_running = true;
+
+  TB6600_enable();
+  HAL_TIM_Base_Start_IT(&htim2);
+  HAL_TIM_PWM_Start(&htim14, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
@@ -308,6 +317,21 @@ void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin)
       asm("nop");
   }
  }
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  if (htim == &htim2)
+  {
+      if(motion_state.is_running)
+      {
+        motion_update(&motion_state, &test_suite);
+      }
+      else
+      {
+        HAL_TIM_Base_Stop_IT(&htim2);
+        asm("nop");
+      }
+  }
+}
 /* USER CODE END 4 */
 
 /**

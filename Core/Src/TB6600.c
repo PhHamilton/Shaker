@@ -48,6 +48,19 @@ TB6600_status_t TB6600_set_speed(uint32_t steps_per_sec)
     return TB6600_OK;
 }
 
+TB6600_status_t TB6600_set_frequency(float frequency)
+{
+    if(frequency < 1.0f)
+    {
+    }
+
+    uint32_t arr = TB6600_TIMER_CLOCK_HZ / (2.0f * frequency) - 1;
+    __HAL_TIM_SET_AUTORELOAD(&htim14, arr);
+    __HAL_TIM_SET_COMPARE(&htim14, TIM_CHANNEL_1, arr/2);
+
+    return TB6600_OK;
+}
+
 TB6600_status_t TB6600_start(TB6600_direction_t dir, uint32_t steps_per_sec)
 {
     if(is_running)

@@ -23,6 +23,7 @@ TB6600_status_t TB6600_enable(void);
 TB6600_status_t TB6600_disable(void);
 TB6600_status_t TB6600_set_direction(TB6600_direction_t dir);
 TB6600_status_t TB6600_set_speed(uint32_t steps_per_sec);
+TB6600_status_t TB6600_set_frequency(float frequency);
 TB6600_status_t TB6600_start(TB6600_direction_t dir, uint32_t steps_per_sec);
 TB6600_status_t TB6600_stop(void);
 bool TB6600_is_running(void);
