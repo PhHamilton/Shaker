@@ -40,7 +40,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define DEBUG_TRANSMIT_TIME 1000 //ms
+#define MINIMUM_DISTANCE_MM 100
+#define MAXIMUM_DISTANCE_MM 3000
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -57,6 +59,10 @@ serial_packet_t serial_pkt;
 tof_handler_t th;
 test_suite_t test_suite;
 motion_state_t motion_state;
+
+volatile int32_t n_repetitions_counter = 0;
+
+uint32_t latest_transmission = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -121,7 +127,7 @@ int main(void)
   test_suite.a_max = 20;
   test_suite.v_max = 10;
 
-  motion_state.target_d = 1;
+  motion_state.target_d = -50;
   motion_state.steps_per_mm = 400;
   motion_state.is_running = true;
 
@@ -149,12 +155,10 @@ int main(void)
                 {
                     uint8_t tx_buf[9];
                     tx_buf[0] = serial_pkt.cmd;
-                    tx_buf[1] = (SHAKER_ID >> 8) & 0xFF;
-                    tx_buf[2] = SHAKER_ID & 0xFF;
 
                     for(uint8_t i = 0; i < sizeof(SW_VERSION)/sizeof(SW_VERSION[0]); i++)
                     {
-                        tx_buf[i+3] = SW_VERSION[i];
+                        tx_buf[i+1] = SW_VERSION[i];
                     }
 
                     if(serial_send(tx_buf, sizeof(tx_buf)) != SERIAL_OK)
@@ -179,16 +183,34 @@ int main(void)
                     test_suite.a_max = serial_pkt.payload[1];
                     test_suite.v_max = serial_pkt.payload[2];
                     test_suite.d = (int8_t)serial_pkt.payload[3];
+
+                    motion_state.j_cmd = 0.0f;
+                    motion_state.target_d = test_suite.d;
+
+                    serial_send_ack(serial_pkt.cmd, SERIAL_ACK);
                 }
                 break;
                 case SERIAL_START_TEST:
                 {
                     system_state = SYSTEM_RUN;
+
+                    serial_send_ack(serial_pkt.cmd, SERIAL_ACK);
+
+                    TB6600_enable();
+                    motion_state.is_running = true;
+                    HAL_TIM_Base_Start_IT(&htim2);
+                    HAL_TIM_PWM_Start(&htim14, TIM_CHANNEL_1);
                 }
                 break;
                 case SERIAL_STOP_TEST:
                 {
                     system_state = SYSTEM_IDLE;
+
+                    HAL_TIM_Base_Stop_IT(&htim2);
+                    TB6600_disable();
+                    motion_state.is_running = false;
+
+                    serial_send_ack(serial_pkt.cmd, SERIAL_ACK);
                 }
                 case SERIAL_UNKNOWN:
                 {
@@ -204,7 +226,8 @@ int main(void)
         }
         else
         {
-
+            asm("nop");
+            __HAL_UART_SEND_REQ(&huart1, UART_RXDATA_FLUSH_REQUEST);
         }
     }
 
@@ -230,10 +253,17 @@ int main(void)
         break;
         case SYSTEM_RUN:
         {
-            if(tof_measurement_ready)
+            uint32_t current_tick = HAL_GetTick();
+
+            if(current_tick - latest_transmission > DEBUG_TRANSMIT_TIME)
             {
-                tof_measurement_ready = false;
-                tof_handler_get_latest_measurement(&th);
+                latest_transmission = current_tick;
+                uint8_t tx_buf[3];
+
+                tx_buf[0] = SERIAL_DATA;
+                tx_buf[1] = (th.x_mm >> 8) & 0xFF;
+                tx_buf[2] = th.x_mm & 0xFF;
+                serial_send(tx_buf, sizeof(tx_buf));
             }
         }
         break;
@@ -242,16 +272,20 @@ int main(void)
             Error_Handler();
         }
     }
-/*
+
     if(tof_measurement_ready)
     {
-        uint8_t tx_buf[3];
-        tx_buf[0] = (th.x_mm >> 8) & 0x0FF;
-        tx_buf[1] = th.x_mm & 0x0FF;
-        tx_buf[2] = '\n';
-        HAL_UART_Transmit(&huart1, tx_buf, 2, 200);
+        tof_measurement_ready = false;
+        tof_handler_get_latest_measurement(&th);
+
+        if(th.x_mm <= MINIMUM_DISTANCE_MM || th.x_mm >= MAXIMUM_DISTANCE_MM)
+        {
+         // STOP ALL!!
+         TB6600_disable();
+         HAL_TIM_Base_Stop_IT(&htim2);
+         asm("nop");
+        }
     }
-*/
   }
   /* USER CODE END 3 */
 }
@@ -327,8 +361,21 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
       }
       else
       {
-        HAL_TIM_Base_Stop_IT(&htim2);
-        asm("nop");
+        if(motion_state.n_repetitions == -1) //Inifinate repetitions
+        {
+            return;
+        }
+
+        n_repetitions_counter++;
+
+        if(n_repetitions_counter >= motion_state.n_repetitions)
+        {
+            HAL_TIM_Base_Stop_IT(&htim2);
+        }
+        else
+        {
+            motion_state.target_d = -motion_state.target_d;
+        }
       }
   }
 }

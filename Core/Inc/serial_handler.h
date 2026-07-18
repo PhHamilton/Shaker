@@ -21,8 +21,15 @@ typedef enum
     SERIAL_CONFIGURE_TEST_SUITE,
     SERIAL_START_TEST,
     SERIAL_STOP_TEST,
+    SERIAL_DATA,
     SERIAL_UNKNOWN
 }serial_commands_t;
+
+typedef enum
+{
+    SERIAL_NACK,
+    SERIAL_ACK
+}serial_acknowledgement_t;
 
 typedef enum
 {
@@ -48,6 +55,7 @@ bool serial_message_available(void);
 serial_status_t serial_parse(serial_packet_t *pkt);
 
 serial_status_t serial_send(const uint8_t *data, const uint8_t size);
+serial_status_t serial_send_ack(const serial_commands_t cmd, const serial_acknowledgement_t ack);
 
 void serial_rx_callback(uint8_t *data, uint16_t size);
 

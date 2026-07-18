@@ -27,6 +27,10 @@ serial_status_t serial_parse(serial_packet_t *pkt)
 
     if(n_bytes < MINIMUM_MSG_LENGTH || n_bytes > MSG_BUF_SIZE)
     {
+        if(uart_data.msg > 0)
+        {
+            uart_data.msg--;
+        }
         return SERIAL_INVALID_MSG;
     }
 
@@ -97,6 +101,13 @@ serial_status_t serial_send(const uint8_t *data, const uint8_t size)
     return SERIAL_OK;
 }
 
+serial_status_t serial_send_ack(const serial_commands_t cmd, const serial_acknowledgement_t ack)
+{
+    uint8_t tx_buf[2] = {cmd, ack};
+
+    return serial_send(tx_buf, sizeof(tx_buf));
+}
+
 static uint8_t uart_get_message(uint8_t *data, uint8_t max_size)
 {
     if(!data || uart_data.msg == 0)
@@ -115,13 +126,14 @@ static uint8_t uart_get_message(uint8_t *data, uint8_t max_size)
         }
 
         uart_data.buffer_tail = (uart_data.buffer_tail + 1) % UART_BUFFER_SIZE;
-
-        if(byte == SERIAL_MSG_TERMINATION)
-        {
-            uart_data.msg--;
-            break;
-        }
     }
+    uart_data.msg--;
+
+    if(uart_data.rx_buf[uart_data.buffer_head-1] != SERIAL_MSG_TERMINATION)
+    {
+        return 0;
+    }
+
     return n_bytes;
 }
 

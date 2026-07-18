@@ -24,6 +24,7 @@ typedef struct
     float target_d;
     float steps_per_mm;
 
+    int16_t n_repetitions;
     bool is_running;
 
 }motion_state_t;

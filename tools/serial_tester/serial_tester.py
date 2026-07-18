@@ -23,11 +23,12 @@ ADMIN_ID    = 0xB055
 SHAKER_ID   = 0x555B
 TERMINATION = 0x0A
 
-CMD_IDENTIFY            = 0x00
-CMD_CONFIGURE_PARAM     = 0x01
+CMD_IDENTIFY             = 0x00
+CMD_CONFIGURE_PARAM      = 0x01
 CMD_CONFIGURE_TEST_SUITE = 0x02
-CMD_START_TEST          = 0x03
-CMD_STOP_TEST           = 0x04
+CMD_START_TEST           = 0x03
+CMD_STOP_TEST            = 0x04
+CMD_DATA                 = 0x05
 
 CMD_NAMES = {
     CMD_IDENTIFY:             "IDENTIFY",
@@ -35,6 +36,7 @@ CMD_NAMES = {
     CMD_CONFIGURE_TEST_SUITE: "CONFIGURE_TEST_SUITE",
     CMD_START_TEST:           "START_TEST",
     CMD_STOP_TEST:            "STOP_TEST",
+    CMD_DATA:                 "DATA"
 }
 
 
@@ -123,9 +125,12 @@ class Receiver(threading.Thread):
 
             if cmd == CMD_IDENTIFY and len(pld) >= 8:
                 device_id = (pld[0] << 8) | pld[1]
-                sw_str = bytes(pld[2:]).decode('ascii', errors='replace')
-                print(f"     Device ID: 0x{device_id:04X}  SW version: {sw_str}")
+                sw_str = bytes(pld).decode('ascii', errors='replace')
+                print(f"     Device ID: 0x{sid:04X}  SW version: {sw_str}")
 
+            if cmd == CMD_DATA:
+                x_mm = pld[0] << 8 | pld[1]
+                print(f" Data: {x_mm} mm")
         print("cmd> ", end="", flush=True)
 
 
