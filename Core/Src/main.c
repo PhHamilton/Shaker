@@ -174,7 +174,7 @@ int main(void)
                 break;
                 case SERIAL_CONFIGURE_TEST_SUITE:
                 {
-                    if(serial_pkt.payload_size != 4)
+                    if(serial_pkt.payload_size != 5)
                     {
                         break;
                     }
@@ -183,6 +183,7 @@ int main(void)
                     test_suite.a_max = serial_pkt.payload[1];
                     test_suite.v_max = serial_pkt.payload[2];
                     test_suite.d = (int8_t)serial_pkt.payload[3];
+                    test_suite.n_repetitions = serial_pkt.payload[4];
 
                     motion_state.j_cmd = 0.0f;
                     motion_state.target_d = test_suite.d;
