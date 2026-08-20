@@ -185,10 +185,19 @@ int main(void)
                     test_suite.d = (int8_t)serial_pkt.payload[3];
                     test_suite.n_repetitions = serial_pkt.payload[4];
 
-                    motion_state.j_cmd = 0.0f;
-                    motion_state.target_d = test_suite.d;
-
                     serial_send_ack(serial_pkt.cmd, SERIAL_ACK);
+                }
+                break;
+                case SERIAL_TEST_INIT:
+                {
+                    int16_t mid_pos = MINIMUM_DISTANCE_MM + (MAXIMUM_DISTANCE_MM - MINIMUM_DISTANCE_MM)/2;
+                    int16_t start_pos = mid_pos - th.x_mm;
+
+                    motion_state.target_d = start_pos;
+                    motion_state.is_running = true;
+                    serial_send_ack(serial_pkt.cmd, SERIAL_ACK);
+                    HAL_TIM_Base_Start_IT(&htim2);
+                    HAL_TIM_PWM_Start(&htim14, TIM_CHANNEL_1);
                 }
                 break;
                 case SERIAL_START_TEST:
