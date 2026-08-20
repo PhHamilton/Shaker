@@ -294,6 +294,7 @@ int main(void)
          // STOP ALL!!
          TB6600_disable();
          HAL_TIM_Base_Stop_IT(&htim2);
+         motion_state.is_running = false;
          asm("nop");
         }
     }
