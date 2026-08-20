@@ -207,6 +207,7 @@ int main(void)
                     serial_send_ack(serial_pkt.cmd, SERIAL_ACK);
 
                     TB6600_enable();
+                    motion_state.target_d = test_suite.d;
                     motion_state.is_running = true;
                     HAL_TIM_Base_Start_IT(&htim2);
                     HAL_TIM_PWM_Start(&htim14, TIM_CHANNEL_1);
@@ -371,20 +372,23 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
       }
       else
       {
-        if(motion_state.n_repetitions == -1) //Inifinate repetitions
+        if(test_suite.n_repetitions == 255) //Inifinate repetitions
         {
+            motion_state.is_running = true;
+            motion_state.target_d = -test_suite.d;
             return;
         }
 
         n_repetitions_counter++;
 
-        if(n_repetitions_counter >= motion_state.n_repetitions)
+        if(n_repetitions_counter >= test_suite.n_repetitions)
         {
             HAL_TIM_Base_Stop_IT(&htim2);
         }
         else
         {
-            motion_state.target_d = -motion_state.target_d;
+            motion_state.is_running = true;
+            motion_state.target_d = -test_suite.d;
         }
       }
   }
