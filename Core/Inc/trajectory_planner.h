@@ -11,6 +11,7 @@ typedef struct
     uint16_t a_max;
     uint16_t v_max;
     int16_t d;
+    uint8_t n_repetitions;
 }test_suite_t;
 
 typedef struct
@@ -24,7 +25,6 @@ typedef struct
     float target_d;
     float steps_per_mm;
 
-    int16_t n_repetitions;
     bool is_running;
 
 }motion_state_t;
