@@ -26,14 +26,16 @@ TERMINATION = 0x0A
 CMD_IDENTIFY             = 0x00
 CMD_CONFIGURE_PARAM      = 0x01
 CMD_CONFIGURE_TEST_SUITE = 0x02
-CMD_START_TEST           = 0x03
-CMD_STOP_TEST            = 0x04
-CMD_DATA                 = 0x05
+CMD_TEST_INIT            = 0x03
+CMD_START_TEST           = 0x04
+CMD_STOP_TEST            = 0x05
+CMD_DATA                 = 0x06
 
 CMD_NAMES = {
     CMD_IDENTIFY:             "IDENTIFY",
     CMD_CONFIGURE_PARAM:      "CONFIGURE_PARAM",
     CMD_CONFIGURE_TEST_SUITE: "CONFIGURE_TEST_SUITE",
+    CMD_TEST_INIT:            "INIT_TEST",
     CMD_START_TEST:           "START_TEST",
     CMD_STOP_TEST:            "STOP_TEST",
     CMD_DATA:                 "DATA"
@@ -155,7 +157,8 @@ def print_help():
 Kommandon:
   identify                        Skicka IDENTIFY
   configure_param                 Skicka CONFIGURE_PARAM (ingen payload)
-  configure_test j_max a_max v_max d   Konfigurera testserie (4 x uint8)
+  configure_test j_max a_max v_max d n_rep   Konfigurera testserie (4 x uint8)
+  test_init                       Skicka TEST_INIT
   start                           Skicka START_TEST
   stop                            Skicka STOP_TEST
   raw <HEX bytes...>              Skicka rå hex-bytes, ex: raw AA 55 B0 55 00
@@ -218,8 +221,8 @@ def main():
                 send(ser, CMD_CONFIGURE_PARAM)
 
             elif cmd_word == "configure_test":
-                if len(parts) != 5:
-                    print("Användning: configure_test j_max a_max v_max d")
+                if len(parts) != 6:
+                    print("Användning: configure_test j_max a_max v_max d n_rep")
                     continue
                 try:
                     vals = [int(p) for p in parts[1:]]
@@ -229,6 +232,8 @@ def main():
                 except ValueError:
                     print("Värden måste vara heltal 0-255")
 
+            elif cmd_word == "test_init":
+                send(ser,CMD_TEST_INIT)
             elif cmd_word == "start":
                 send(ser, CMD_START_TEST)
 

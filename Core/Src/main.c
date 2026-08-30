@@ -41,8 +41,8 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define DEBUG_TRANSMIT_TIME 1000 //ms
-#define MINIMUM_DISTANCE_MM 100
-#define MAXIMUM_DISTANCE_MM 3000
+#define MINIMUM_DISTANCE_MM 80
+#define MAXIMUM_DISTANCE_MM 300
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
