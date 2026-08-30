@@ -61,6 +61,8 @@ test_suite_t test_suite;
 motion_state_t motion_state;
 
 volatile int32_t n_repetitions_counter = 0;
+static float shake_home_d = 0.0f;
+static int8_t shake_dir = 1;
 
 uint32_t latest_transmission = 0;
 /* USER CODE END PV */
@@ -206,8 +208,12 @@ int main(void)
 
                     serial_send_ack(serial_pkt.cmd, SERIAL_ACK);
 
+                    n_repetitions_counter = 0;
+                    shake_dir = 1;
+                    shake_home_d = motion_state.d;
+
                     TB6600_enable();
-                    motion_state.target_d = test_suite.d;
+                    motion_state.target_d = shake_home_d + (float)shake_dir * (float)test_suite.d;
                     motion_state.is_running = true;
                     HAL_TIM_Base_Start_IT(&htim2);
                     HAL_TIM_PWM_Start(&htim14, TIM_CHANNEL_1);
@@ -223,6 +229,7 @@ int main(void)
 
                     serial_send_ack(serial_pkt.cmd, SERIAL_ACK);
                 }
+                break;
                 case SERIAL_UNKNOWN:
                 {
 
@@ -373,23 +380,34 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
       }
       else
       {
+        bool start_next_leg = false;
+
         if(test_suite.n_repetitions == 255) //Inifinate repetitions
         {
-            motion_state.is_running = true;
-            motion_state.target_d = -test_suite.d;
-            return;
-        }
-
-        n_repetitions_counter++;
-
-        if(n_repetitions_counter >= test_suite.n_repetitions)
-        {
-            HAL_TIM_Base_Stop_IT(&htim2);
+            start_next_leg = true;
         }
         else
         {
+            n_repetitions_counter++;
+
+            if(n_repetitions_counter >= test_suite.n_repetitions)
+            {
+                HAL_TIM_Base_Stop_IT(&htim2);
+            }
+            else
+            {
+                start_next_leg = true;
+            }
+        }
+
+        if(start_next_leg)
+        {
+            shake_dir = -shake_dir;
+            motion_state.target_d = shake_home_d + (float)shake_dir * (float)test_suite.d;
             motion_state.is_running = true;
-            motion_state.target_d = -test_suite.d;
+
+            TB6600_enable();
+            HAL_TIM_PWM_Start(&htim14, TIM_CHANNEL_1);
         }
       }
   }

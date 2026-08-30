@@ -26,6 +26,5 @@ TB6600_status_t TB6600_set_speed(uint32_t steps_per_sec);
 TB6600_status_t TB6600_set_frequency(float frequency);
 TB6600_status_t TB6600_start(TB6600_direction_t dir, uint32_t steps_per_sec);
 TB6600_status_t TB6600_stop(void);
-bool TB6600_is_running(void);
 
 #endif //__MOTOR_HANDLER_H__
